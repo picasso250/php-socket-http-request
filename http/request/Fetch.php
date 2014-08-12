@@ -5,39 +5,45 @@ namespace http\request;
 class Fetch
 {
     public function doGet($host, $url = '/', $cb = null, $time_limit = 5) {
-        return $this->do('GET', $host, $url, $cb, $time_limit);
+        return $this->doRequest('GET', $host, $url, $cb, $time_limit);
     }
     
-    public function do($method, $host, $url = '/', $cb = null, $time_limit = 5)
+    public function doRequest($method, $host, $url = '/', $cb = null, $time_limit = 5)
     {
         $t = microtime(true);
         $lines = array(
             "$method $url HTTP/1.1",
             "Host: $host",
-            "Content-Length: 73",
-            "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-            "User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36",
-            "Referer: http://$host/",
-            "Accept-Language: zh-CN,zh;q=0.8",
+            "User-Agent: curl/7",
+            "Pragma: no-cache",
+            "Accept: */*",
         );
-        $text = implode("\r\n", $lines);
         $socket = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
         if (!$socket) {
             throw new \Exception("Could not create socket", 1);
         }
+        $port = 80;
         $connection = socket_connect($socket, $host, $port);
         if (!$connection) {
             throw new \Exception("Could not connet server", 1);
         }
-        self::write_enough($socket);
+        foreach ($lines as $line) {
+            echo $line,"\n";
+            self::write_enough($socket, $line);
+            self::write_enough($socket, "\r\n");
+        }
         $str = '';
-        while (($buf = socket_read($socket, 1024)) !== '' && (microtime(true) - $t <= $time_limit)) {
-            $str .= $buf;
-            if ($cb) {
-                if (!$cb($buf, $str)) {
-                    break;
-                }
+        $buf = null;
+        socket_set_nonblock($socket);
+        while (($buf = socket_read($socket, 1024)) !== '' && (($now = microtime(true)) <= $time_limit + $t)) {
+            echo "=$now=\t$buf\n";
+            if ($buf) {
+                $str .= $buf;
             }
+            if ($cb && !$cb($buf, $str)) {
+                break;
+            }
+            sleep(1);
         }
 
         return $str;
