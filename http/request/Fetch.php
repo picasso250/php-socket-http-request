@@ -37,14 +37,12 @@ class Fetch
         $buf = null;
         socket_set_nonblock($socket);
         while (($buf = socket_read($socket, 1024)) !== '' && (($now = microtime(true)) <= $time_limit + $t)) {
-            echo "=$now=\t$buf\n";
             if ($buf) {
                 $str .= $buf;
             }
             if ($cb && !$cb($buf, $str)) {
                 break;
             }
-            sleep(1);
         }
 
         return $str;
