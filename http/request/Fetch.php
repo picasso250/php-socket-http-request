@@ -32,6 +32,7 @@ class Fetch
             self::write_enough($socket, $line);
             self::write_enough($socket, "\r\n");
         }
+        self::write_enough($socket, "\r\n");
         $str = '';
         $buf = null;
         socket_set_nonblock($socket);
