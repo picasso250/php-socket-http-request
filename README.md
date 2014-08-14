@@ -7,7 +7,7 @@ php-socket-http-request
 
 用这个就可以了。
 
-```
+```php
 <?php
 
 $fetch = new http\request\Fetch;
