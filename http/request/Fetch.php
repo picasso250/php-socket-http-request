@@ -83,8 +83,8 @@ class Fetch
 
     private static function parseFirstLine($line)
     {
-        if (!preg_match('/^(\w+)\s+(\d+)\s(\.+)?$/', $line, $matches)) {
-            throw new \Exception("mal line", 1);
+        if (!preg_match('/^(.+?)\s+(\d+)\s+(.+)?$/', $line, $matches)) {
+            throw new \Exception("mal line $line", 1);
         }
         return array(
             'protocal' => $matches[1],
