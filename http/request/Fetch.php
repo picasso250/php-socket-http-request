@@ -44,6 +44,7 @@ class Fetch
                 break;
             }
         }
+        socket_close($socket);
 
         return $str;
     }
