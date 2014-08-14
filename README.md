@@ -13,7 +13,7 @@ php-socket-http-request
 $fetch = new http\request\Fetch;
 // 当获取完head之后，就不再获取了。
 $html = $fetch->doGet('www.test.org', '/', function($_, $html) {
-    return preg_match('%<head.+?</head>%is', $html);
+    return !preg_match('%<head.+?</head>%is', $html); // 返回false会断开连接
 });
 var_dump($html);
 ```

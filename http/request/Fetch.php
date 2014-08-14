@@ -28,7 +28,7 @@ class Fetch
             throw new \Exception("Could not connet server", 1);
         }
         foreach ($lines as $line) {
-            echo $line,"\n";
+            // echo $line,"\n";
             self::write_enough($socket, $line);
             self::write_enough($socket, "\r\n");
         }
@@ -46,9 +46,52 @@ class Fetch
         }
         socket_close($socket);
 
-        return $str;
+        return self::parseResponse($str);
     }
 
+    public static function parseResponse($str) {
+        $deliminator = "\r\n\r\n";
+        $pos = strpos($str, $deliminator);
+        if ($pos === false) {
+            throw new \Exception("mal format response", 1);
+        }
+        $header = substr($str, 0, $pos);
+        $data = self::parseHeader($header);
+        $data['body'] = substr($str, $pos+strlen($deliminator));
+        return $data;
+    }
+
+    public static function parseHeader($text)
+    {
+        $lf = "\r\n";
+        $arr = explode($lf, $text);
+        $first_line = $arr[0];
+        $data = self::parseFirstLine($first_line);
+        $n = count($arr);
+        $headers = array();
+        for ($i=1; $i < $n; $i++) { 
+            if (!preg_match('/^([^:]+):(.+)/', $arr[$i], $matches)) {
+                throw new \Exception("mal header", 1);
+            }
+            $key = trim($matches[1]);
+            $value = trim($matches[2]);
+            $headers[$key] = $value;
+        }
+        $data['header'] = $headers;
+        return $data;
+    }
+
+    private static function parseFirstLine($line)
+    {
+        if (!preg_match('/^(\w+)\s+(\d+)\s(\.+)?$/', $line, $matches)) {
+            throw new \Exception("mal line", 1);
+        }
+        return array(
+            'protocal' => $matches[1],
+            'code' => intval($matches[2]),
+            'msg' => isset($matches[3]) ? trim($matches[3]) : '',
+        );
+    }
 
     /**
      * 读取足够的字节数
